@@ -247,8 +247,8 @@ func outboundIP() (net.IP, error) {
 // genTLSCertificate generates a temporary self-signed in-memory TLS
 // certificate with an RSA 2048-bit private key.
 //
-// This is not designed, nor needs to be secure, as it is only used for TLS
-// connections between the Weather Station and the spoofed WU API server.
+// This is not designed to be, nor needs to be secure, as it is only used for
+// TLS connections between the Weather Station and the exporter's WU API server.
 //
 // This only works if the Weather Station accepts any TLS certificate, which
 // appears to be the case most of the time.
