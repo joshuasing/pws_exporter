@@ -272,7 +272,7 @@ func genTLSCertificate() (tls.Certificate, error) {
 	t := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"WU Weather Station Exporter"},
+			CommonName: "Personal Weather Station Exporter",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
