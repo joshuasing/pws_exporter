@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package wu implements the Weather Underground data submission API, as
+// specified by https://support.weather.com/s/article/PWS-Upload-Protocol.
+//
+// The submitted data uses imperial values, which are immediately converted to
+// metric values for compatibility with other systems.
 package wu
 
 import (
@@ -171,7 +176,7 @@ func stof(v string) (float32, bool) {
 	return float32(f), true
 }
 
-// ftoc converts Fahrenheit (freedom unit) to Celsius.
+// ftoc converts Fahrenheit to Celsius.
 func ftoc(f float32) float32 {
 	return (f - 32) / 1.8
 }
