@@ -22,103 +22,225 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/pflag"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/joshuasing/pws_exporter/internal/collector"
+	"github.com/joshuasing/pws_exporter/internal/collector/wu"
 	"github.com/joshuasing/pws_exporter/internal/exporter"
+	"github.com/joshuasing/pws_exporter/internal/exporter/homeassistant"
+	"github.com/joshuasing/pws_exporter/internal/exporter/prom"
 )
 
-const defaultListenAddress = ":9452"
+const defaultPromListenAddress = ":9452"
 
-var (
-	logLevel           = flag.String("log", "info", "Log level")
-	listenAddress      = flag.String("listen", defaultListenAddress, "Listen address")
-	exporterAddress    = flag.String("exporter", "", "Exporter IP address")
-	upstreamResolver   = flag.String("resolver", "8.8.8.8:53", "Upstream DNS resolver")
-	dnsListenAddress   = flag.String("dns-listen", "", "DNS server listen address")
-	wuListenAddress    = flag.String("wu-listen", ":80", "WU HTTP server listen address")
-	wuTLSListenAddress = flag.String("wu-tls-listen", ":443", "WU HTTPS server listen address")
-)
+const cmdHelp = `pws_exporter exports sensor data from Personal Weather Stations.
 
-func main() {
-	flag.Parse()
-	os.Exit(run())
+Flags:
+`
+
+type options struct {
+	logLevel string
+
+	// Prometheus exporter
+	promListenAddress string
+
+	// Home Assistant exporter
+	homeAssistantMQTTURL      string
+	homeAssistantMQTTUsername string
+	homeAssistantMQTTPassword string
+
+	// HTTP collector
+	httpListenAddress string
+	dnsListenAddress  string
+	enableWU          bool
+
+	// DNS
+	exporterIPAddress       string
+	upstreamResolverAddress string
 }
 
-func run() int {
-	lvl, err := parseLogLevel(*logLevel)
+func parseFlags(opts *options) error {
+	pf := pflag.NewFlagSet("pws_exporter", pflag.ExitOnError)
+
+	pf.StringVar(&opts.logLevel, "log", "info", "Log level (options: debug, info, warn, error)")
+
+	// Exporters
+	pf.StringVar(&opts.promListenAddress, "prom-listen", defaultPromListenAddress, "Prometheus HTTP listen address")
+	pf.StringVar(&opts.homeAssistantMQTTURL, "ha-mqtt-url", "", "Home Assistant MQTT broker URL")
+	pf.StringVar(&opts.homeAssistantMQTTUsername, "ha-mqtt-user", "", "Home Assistant MQTT broker username")
+	pf.StringVar(&opts.homeAssistantMQTTPassword, "ha-mqtt-pass", "", "Home Assistant MQTT broker password")
+
+	// Collectors
+	pf.StringVar(&opts.httpListenAddress, "collector-listen", ":8080", "HTTP collector listen address")
+	pf.StringVar(&opts.dnsListenAddress, "dns-listen", "", "DNS server listen address")
+	pf.BoolVar(&opts.enableWU, "wu", true, "Whether to support Weather Underground API submission")
+
+	// DNS
+	pf.StringVar(&opts.exporterIPAddress, "exporter-ip", "", "Exporter IP address")
+	pf.StringVar(&opts.upstreamResolverAddress, "resolver", "8.8.8.8:53", "Upstream DNS resolver address (host:port)")
+
+	var help bool
+	pf.BoolVarP(&help, "help", "h", false, "Displays help message")
+	pf.Usage = func() {
+		_, _ = fmt.Fprintf(os.Stderr, "%s", cmdHelp)
+		pf.PrintDefaults()
+	}
+
+	// Parse flags
+	if err := pf.Parse(os.Args); err != nil {
+		return fmt.Errorf("parse flags: %w", err)
+	}
+
+	if help {
+		pf.Usage()
+		return pflag.ErrHelp
+	}
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
+		slog.Error("An error occurred", slog.Any("err", err))
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	var opts options
+	if err := parseFlags(&opts); err != nil {
+		if errors.Is(err, pflag.ErrHelp) {
+			return nil
+		}
+		return fmt.Errorf("parse flags: %w", err)
+	}
+
+	lvl, err := parseLogLevel(opts.logLevel)
 	if err != nil {
-		slog.Error("Failed to parse log level", slog.Any("err", err))
-		return 1
+		return fmt.Errorf("parse log level: %w", err)
 	}
 	slog.SetLogLoggerLevel(lvl)
 
-	slog.Info("Starting WU Weather Station exporter")
+	slog.Info("Starting PWS exporter")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	ex, err := exporter.NewExporter(exporter.Config{
-		ExporterIP:         *exporterAddress,
-		UpstreamResolver:   *upstreamResolver,
-		DNSListenAddress:   *dnsListenAddress,
-		WUListenAddress:    *wuListenAddress,
-		WUTLSListenAddress: *wuTLSListenAddress,
+	// Setup exporters
+	exporters, handler, err := setupExporters(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("setup exporters: %w", err)
+	}
+
+	// Setup collectors
+	c, err := collector.NewCollectors(collector.Config{
+		ListenAddress:    opts.httpListenAddress,
+		DNSListenAddress: opts.dnsListenAddress,
+		CollectorIP:      opts.exporterIPAddress,
+		UpstreamResolver: opts.upstreamResolverAddress,
 	})
 	if err != nil {
-		slog.Error("Failed to create exporter", slog.Any("err", err))
-		return 1
+		return fmt.Errorf("new collectors: %w", err)
 	}
 
-	exErr := make(chan error)
+	// Setup WU collector
+	if opts.enableWU {
+		slog.Info("Using WU API collector")
+		c.RegisterHTTPCollectors(wu.NewCollector(handler))
+	}
+
+	// Start collectors
+	var errg errgroup.Group
+	errg.Go(c.Run)
+
+	// Start exporters
+	for _, ex := range exporters {
+		errg.Go(ex.Run)
+	}
+
+	errc := make(chan error)
 	go func() {
-		exErr <- ex.ListenAndServe()
+		errc <- errg.Wait()
+		close(errc)
 	}()
 
-	// Metrics handler
-	http.Handle("/metrics", promhttp.HandlerFor(ex.Registry(), promhttp.HandlerOpts{}))
-
-	// Run HTTP server in a goroutine
-	httpErr := make(chan error)
-	go func() {
-		srv := http.Server{
-			Addr:              *listenAddress,
-			ReadHeaderTimeout: 5 * time.Second,
-		}
-		slog.Info("Metrics HTTP server listening", slog.String("address", srv.Addr))
-		httpErr <- srv.ListenAndServe()
-	}()
-
+	var exitErr error
 	select {
 	case <-ctx.Done():
-	case err = <-exErr:
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Failed to start exporter", slog.Any("err", err))
-		}
-		return 1
-	case err = <-httpErr:
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Failed to start HTTP server", slog.Any("err", err))
-		}
-		if eerr := ex.Close(); eerr != nil {
-			slog.Error("Failed to close exporter", slog.Any("err", eerr))
-			return 1
-		}
-		if err != nil {
-			return 1
+	case exitErr = <-errc:
+		slog.Error("An error occurred, shutting down...",
+			slog.Any("err", exitErr))
+	}
+
+	// Close everything.
+	if err = c.Close(); err != nil {
+		slog.Error("Failed to close collectors", slog.Any("err", err))
+	}
+	for _, ex := range exporters {
+		if err = ex.Close(); err != nil {
+			slog.Error("Failed to close exporter",
+				slog.String("exporter_id", ex.ExporterID()),
+				slog.Any("err", err))
 		}
 	}
 
-	return 0
+	if exitErr != nil {
+		return exitErr
+	}
+	return <-errc
+}
+
+func setupExporters(_ context.Context, opts *options) ([]exporter.Exporter, collector.HandlerFunc, error) {
+	var exporters []exporter.Exporter
+
+	// Setup Prometheus exporter
+	if opts.promListenAddress != "" {
+		slog.Info("Using Prometheus exporter")
+		promEx, err := prom.NewExporter(prom.Config{
+			ListenAddress: opts.promListenAddress,
+		})
+		if err != nil {
+			return nil, nil, fmt.Errorf("new prometheus exporter: %w", err)
+		}
+
+		exporters = append(exporters, promEx)
+	}
+
+	// Setup Home Assistant exporter
+	if opts.homeAssistantMQTTURL != "" {
+		slog.Info("Using Home Assistant MQTT exporter")
+		haEx, err := homeassistant.NewExporter(homeassistant.Config{
+			MQTTBrokerURL: opts.homeAssistantMQTTURL,
+			MQTTUsername:  opts.homeAssistantMQTTUsername,
+			MQTTPassword:  opts.homeAssistantMQTTPassword,
+		})
+		if err != nil {
+			return nil, nil, fmt.Errorf("new home assistant exporter: %w", err)
+		}
+
+		exporters = append(exporters, haEx)
+	}
+
+	return exporters, newCollectorHandler(exporters), nil
+}
+
+func newCollectorHandler(exporters []exporter.Exporter) collector.HandlerFunc {
+	return func(deviceID string, dm *exporter.DeviceMeasurement) {
+		for _, ex := range exporters {
+			if err := ex.HandleDeviceMeasurement(deviceID, dm); err != nil {
+				slog.Error("Failed to handle device measurement",
+					slog.String("exporter_id", ex.ExporterID()),
+					slog.String("device_id", deviceID))
+			}
+		}
+	}
 }
 
 func parseLogLevel(level string) (slog.Level, error) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
+// Copyright (c) 2025 Joshua Sing <joshua@Joshuasing.dev>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package exporter
+package collector
 
-import (
-	"github.com/prometheus/client_golang/prometheus"
+import "strconv"
 
-	"github.com/joshuasing/pws_exporter/internal/exporter/wu"
-)
+// ParseFloat32 parses a float from the given string.
+// If the string cannot be parsed as a float, 0, false will be returned.
+func ParseFloat32(v string) (float32, bool) {
+	f, err := strconv.ParseFloat(v, 32)
+	if err != nil {
+		return 0, false
+	}
+	return float32(f), true
+}
 
-func (e *Exporter) handleWUSubmission(deviceID string, dm wu.DeviceMeasurement) {
-	m := e.metrics
-	l := prometheus.Labels{"station_id": deviceID}
+// FToC converts Fahrenheit to Celsius.
+func FToC(f float32) float32 {
+	return (f - 32) / 1.8
+}
 
-	m.BarometricPressure.With(l).Set(float64(dm.Barometric))
-	m.DewPoint.With(l).Set(float64(dm.DewPoint))
-	m.Humidity.With(l).Set(float64(dm.Humidity / 100))
-	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity / 100))
-	m.IndoorTemperature.With(l).Set(float64(dm.IndoorTemp))
-	m.RainPastHour.With(l).Set(float64(dm.RainPastHour))
-	m.Rain.Delete(l) // Counter state is stored on the station, not in the exporter.
-	m.Rain.With(l).Add(float64(dm.RainToday))
-	m.Temperature.With(l).Set(float64(dm.Temperature))
-	m.WindDirection.With(l).Set(float64(dm.WindDirection))
-	m.WindGustSpeed.With(l).Set(float64(dm.WindGust))
-	m.WindSpeed.With(l).Set(float64(dm.WindSpeed))
+// InchesToMM converts inches to millimeters.
+func InchesToMM(f float32) float32 {
+	return f * 25.4
+}
+
+// MPHToKPH converts miles/hour to kilometers/hour.
+func MPHToKPH(f float32) float32 {
+	return f * 1.609344
+}
+
+// InHgToHPA converts pressure from inches of mercury (inHg) to hectopascals
+// (hPa). Formula: 1 inHg = 33.8639 hPa.
+func InHgToHPA(inHg float32) float32 {
+	return inHg * 33.8639
 }
