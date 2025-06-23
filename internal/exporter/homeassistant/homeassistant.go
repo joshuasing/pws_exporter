@@ -218,7 +218,7 @@ func (e *Exporter) Run() error {
 	opts.SetAutoReconnect(true)
 	opts.SetClientID("pws_exporter")
 
-	opts.SetOnConnectHandler(func(client mqtt.Client) {
+	opts.SetOnConnectHandler(func(_ mqtt.Client) {
 		slog.Info("Connected to Home Assistant MQTT server",
 			slog.String("broker_url", e.mqttBrokerURL),
 			slog.String("username", e.mqttUsername))
