@@ -83,6 +83,7 @@ func parseFlags(opts *options) error {
 	pf.StringVar(&opts.dnsListenAddress, "dns-listen", "", "DNS server listen address")
 	pf.BoolVar(&opts.enableWU, "wu", true, "Whether to support Weather Underground API submission")
 
+	// DNS
 	pf.StringVar(&opts.exporterIPAddress, "exporter-ip", "", "Exporter IP address")
 	pf.StringVar(&opts.upstreamResolverAddress, "resolver", "8.8.8.8:53", "Upstream DNS resolver address (host:port)")
 
