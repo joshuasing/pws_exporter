@@ -22,25 +22,31 @@ package wu
 
 import (
 	"io"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/joshuasing/pws_exporter/internal/exporter"
 )
 
 const testQuery = SubmissionPath + "?ID=test&PASSWORD=testtest&action=updateraww&realtime=1&rtfreq=5&dateutc=now&baromin=29.65&tempf=63.5&dewptf=51.2&humidity=64&windspeedmph=4.4&windgustmph=4.9&winddir=270&rainin=0.0&dailyrainin=0.0&indoortempf=73.5&indoorhumidity=44"
 
 func TestSubmission(t *testing.T) {
 	var (
-		stationID       string
-		lastMeasurement *DeviceMeasurement
+		deviceID        string
+		lastMeasurement *exporter.DeviceMeasurement
 	)
-	sapi := NewSubmissionAPI(func(sID string, dm DeviceMeasurement) {
-		stationID = sID
-		lastMeasurement = &dm
+	collector := NewCollector(func(dID string, dm *exporter.DeviceMeasurement) {
+		deviceID = dID
+		lastMeasurement = dm
 	})
 
-	ts := httptest.NewTLSServer(sapi)
+	mux := http.NewServeMux()
+	if err := collector.RegisterRoutes(mux); err != nil {
+		t.Errorf("RegisterRoutes err = %v, want nil", err)
+		return
+	}
+	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
 	client := ts.Client()
@@ -74,8 +80,8 @@ func TestSubmission(t *testing.T) {
 	if string(body) != "success\n" {
 		t.Errorf("response body got %q, want %q", string(body), "success\n")
 	}
-	if stationID != "test" {
-		t.Errorf("stationID got %s, want %s", stationID, "test")
+	if deviceID != "test" {
+		t.Errorf("deviceID got %s, want %s", deviceID, "test")
 	}
 	if lastMeasurement == nil {
 		t.Errorf("measurement should contain one measurement")
@@ -83,78 +89,4 @@ func TestSubmission(t *testing.T) {
 	if lastMeasurement.Temperature != 17.5 {
 		t.Errorf("temperature got %f, want %f", lastMeasurement.Temperature, 17.5)
 	}
-}
-
-func TestFtoC(t *testing.T) {
-	tts := []struct {
-		F float32
-		C float32
-	}{
-		{F: 0.0, C: -17.7778}, // Below freezing
-		{F: 32, C: 0},         // Freezing point of water
-		{F: 77.5, C: 25.3},    // Average temperature in Summer for Melbourne, AU
-		{F: 98.6, C: 37},      // Normal body temperature
-		{F: 212, C: 100},      // Boiling point of water
-	}
-	for _, tt := range tts {
-		if c := ftoc(tt.F); round(c, 4) != round(c, 4) {
-			t.Errorf("ftoc(%f) = %f, want %f", tt.F, c, tt.C)
-		}
-	}
-}
-
-func TestInToMM(t *testing.T) {
-	tts := []struct {
-		In float32
-		Mm float32
-	}{
-		{In: 0, Mm: 0},
-		{In: 1, Mm: 25.4},
-		{In: 2.5, Mm: 63.5},
-		{In: 10, Mm: 254},
-	}
-	for _, tt := range tts {
-		if mm := inToMM(tt.In); round(mm, 4) != round(tt.Mm, 4) {
-			t.Errorf("intomm(%f) = %f, want %f", tt.In, mm, tt.Mm)
-		}
-	}
-}
-
-func TestMPHToKPH(t *testing.T) {
-	tts := []struct {
-		MPH float32
-		KPH float32
-	}{
-		{MPH: 0, KPH: 0},
-		{MPH: 1, KPH: 1.60934},
-		{MPH: 45, KPH: 72.4203},
-		{MPH: 60, KPH: 96.56064},
-	}
-	for _, tt := range tts {
-		if c := mphToKPH(tt.MPH); round(c, 5) != round(c, 5) {
-			t.Errorf("mphToKPH(%f) = %f, want %f", tt.MPH, c, tt.KPH)
-		}
-	}
-}
-
-func TestInHGToHPA(t *testing.T) {
-	tts := []struct {
-		InHG float32
-		HPA  float32
-	}{
-		{InHG: 0, HPA: 0},
-		{InHG: 1, HPA: 33.8639},
-		{InHG: 5, HPA: 169.3195},
-		{InHG: 29.92, HPA: 1013.25},
-	}
-	for _, tt := range tts {
-		if c := inHgToHPA(tt.InHG); round(c, 4) != round(c, 4) {
-			t.Errorf("inHgToHPA(%f) = %f, want %f", tt.InHG, c, tt.HPA)
-		}
-	}
-}
-
-func round(v float32, places int) float32 {
-	factor := math.Pow(10, float64(places))
-	return float32(math.Round(float64(v)*factor) / factor)
 }

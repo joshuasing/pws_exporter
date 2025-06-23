@@ -18,10 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package dns implements a simple proxying DNS server that is able to forge
+// responses for certain domains and blackhole other requests.
 package dns
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net"
 
@@ -73,6 +76,7 @@ func NewServer(c Config) *Server {
 	return s
 }
 
+// ServeDNS starts the DNS server.
 func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	if len(r.Question) != 1 {
 		return
@@ -128,11 +132,18 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 // ListenAndServe starts the DNS server on the given address.
 func (s *Server) ListenAndServe(addr string) error {
+	if s.dnsServer != nil {
+		return errors.New("already running")
+	}
+
 	s.dnsServer = &dns.Server{Addr: addr, Net: "udp", Handler: s}
 	return s.dnsServer.ListenAndServe()
 }
 
 // Shutdown shuts down the DNS server.
 func (s *Server) Shutdown(ctx context.Context) error {
+	if s.dnsServer == nil {
+		return nil
+	}
 	return s.dnsServer.ShutdownContext(ctx)
 }

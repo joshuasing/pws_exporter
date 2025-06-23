@@ -18,15 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package exporter
+package prom
 
 import "github.com/prometheus/client_golang/prometheus"
 
 const (
+	namespace        = "weather"
 	stationSubsystem = "station"
 )
 
-type Metrics struct {
+type metrics struct {
 	BarometricPressure *prometheus.GaugeVec
 	DewPoint           *prometheus.GaugeVec
 	Humidity           *prometheus.GaugeVec
@@ -40,10 +41,10 @@ type Metrics struct {
 	WindSpeed          *prometheus.GaugeVec
 }
 
-func newMetrics(namespace string, reg prometheus.Registerer) *Metrics {
+func newMetrics(reg prometheus.Registerer) *metrics {
 	labels := []string{"station_id"}
 
-	m := &Metrics{
+	m := &metrics{
 		BarometricPressure: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: stationSubsystem,
