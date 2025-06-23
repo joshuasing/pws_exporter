@@ -8,8 +8,8 @@
 A easy-to-use metrics exporter for off-the-shelf Personal Weather Stations (PWS).
 
 - **Simple setup.** Start pws_exporter, configure DNS and start receiving data.
-- **Prometheus metrics.** Scrape metrics with Prometheus easily.
-- **Home Assistant support.** Send sensor data to Home Assistant via MQTT.
+- **[Prometheus metrics](#prometheus).** Scrape metrics with Prometheus easily.
+- **[Home Assistant support](#home-assistant).** Send sensor data to Home Assistant via MQTT.
 
 **This exporter is a work in progress, things may break! If you are interested in contributing, please feel free to
 contact me or create an issue/pull request!**
@@ -136,6 +136,9 @@ pws_exporter supports sending data to Home Assistant via MQTT. To enable this, y
   `ssl://home.mydomain.com:8883`)
 - `--ha-mqtt-user`: Home Assistant MQTT username
 - `--ha-mqtt-pass`: Home Assistant MQTT password
+
+When a pws_exporter receives data from a weather station for the first time after startup, it will automatically publish
+an auto-discovery message to MQTT. When future data is received, messages will be published to the state topic.
 
 ## Installation
 
