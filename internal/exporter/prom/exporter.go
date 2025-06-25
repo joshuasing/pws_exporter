@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // Package prom implements an exporter that exposes sensor data as Prometheus
-// metrics and runs an HTTP server to serve the metrics.
+// Metrics and runs an HTTP server to serve the Metrics.
 package prom
 
 import (
@@ -48,7 +48,7 @@ type Config struct {
 type Exporter struct {
 	listenAddress string
 
-	metrics    *metrics
+	metrics    *Metrics
 	registry   *prometheus.Registry
 	httpServer *http.Server
 
@@ -60,7 +60,7 @@ func NewExporter(conf Config) (*Exporter, error) {
 	reg := prometheus.NewRegistry()
 	return &Exporter{
 		listenAddress: conf.ListenAddress,
-		metrics:       newMetrics(reg),
+		metrics:       NewMetrics(reg),
 		registry:      reg,
 	}, nil
 }
@@ -110,21 +110,5 @@ func (e *Exporter) ExporterID() string {
 
 // HandleDeviceMeasurement handles a new measurement from a device.
 func (e *Exporter) HandleDeviceMeasurement(deviceID string, dm *exporter.DeviceMeasurement) error {
-	m := e.metrics
-	l := prometheus.Labels{"station_id": deviceID}
-
-	m.BarometricPressure.With(l).Set(float64(dm.BarometricPressure))
-	m.DewPoint.With(l).Set(float64(dm.DewPoint))
-	m.Humidity.With(l).Set(float64(dm.Humidity / 100))
-	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity / 100))
-	m.IndoorTemperature.With(l).Set(float64(dm.IndoorTemp))
-	m.RainPastHour.With(l).Set(float64(dm.RainPastHour))
-	m.Rain.Delete(l) // Counter state is stored on the station, not in the exporter.
-	m.Rain.With(l).Add(float64(dm.RainToday))
-	m.Temperature.With(l).Set(float64(dm.Temperature))
-	m.WindDirection.With(l).Set(float64(dm.WindDirection))
-	m.WindGustSpeed.With(l).Set(float64(dm.WindGustSpeed))
-	m.WindSpeed.With(l).Set(float64(dm.WindSpeed))
-
-	return nil
+	return e.metrics.HandleDeviceMeasurement(deviceID, dm)
 }

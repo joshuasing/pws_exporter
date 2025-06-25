@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package collector
+package calc
 
 import (
-	"math"
 	"testing"
 )
 
@@ -30,15 +29,35 @@ func TestFtoC(t *testing.T) {
 		F float32
 		C float32
 	}{
+		{F: -9.4, C: -23},     // Extremely cold
 		{F: 0.0, C: -17.7778}, // Below freezing
 		{F: 32, C: 0},         // Freezing point of water
-		{F: 77.5, C: 25.3},    // Average temperature in Summer for Melbourne, AU
+		{F: 77.50, C: 25.27},  // Average temperature in Summer for Melbourne, AU
 		{F: 98.6, C: 37},      // Normal body temperature
 		{F: 212, C: 100},      // Boiling point of water
 	}
 	for _, tt := range tts {
-		if c := FToC(tt.F); round(c, 4) != round(c, 4) {
-			t.Errorf("FToC(%f) = %f, want %f", tt.F, c, tt.C)
+		if got := FToC(tt.F); !approxEqual(got, tt.C) {
+			t.Errorf("FToC(%f) = %f, want %f", tt.F, got, tt.C)
+		}
+	}
+}
+
+func TestCToF(t *testing.T) {
+	tts := []struct {
+		F float32
+		C float32
+	}{
+		{C: -23, F: -9.4},     // Extremely cold
+		{C: -17.7778, F: 0.0}, // Below freezing
+		{C: 0, F: 32},         // Freezing point of water
+		{C: 25.30, F: 77.54},  // Average temperature in Summer for Melbourne, AU
+		{C: 37, F: 98.6},      // Normal body temperature
+		{C: 100, F: 212},      // Boiling point of water
+	}
+	for _, tt := range tts {
+		if got := CToF(tt.C); !approxEqual(got, tt.F) {
+			t.Errorf("CToF(%f) = %f, want %f", tt.C, got, tt.F)
 		}
 	}
 }
@@ -54,8 +73,8 @@ func TestInchesToMM(t *testing.T) {
 		{In: 10, Mm: 254},
 	}
 	for _, tt := range tts {
-		if mm := InchesToMM(tt.In); round(mm, 4) != round(tt.Mm, 4) {
-			t.Errorf("InchesToMM(%f) = %f, want %f", tt.In, mm, tt.Mm)
+		if got := InchesToMM(tt.In); !approxEqual(got, tt.Mm) {
+			t.Errorf("InchesToMM(%f) = %f, want %f", tt.In, got, tt.Mm)
 		}
 	}
 }
@@ -71,8 +90,25 @@ func TestMPHToKPH(t *testing.T) {
 		{MPH: 60, KPH: 96.56064},
 	}
 	for _, tt := range tts {
-		if c := MPHToKPH(tt.MPH); round(c, 5) != round(c, 5) {
-			t.Errorf("MPHToKPH(%f) = %f, want %f", tt.MPH, c, tt.KPH)
+		if got := MPHToKPH(tt.MPH); !approxEqual(got, tt.KPH) {
+			t.Errorf("MPHToKPH(%f) = %f, want %f", tt.MPH, got, tt.KPH)
+		}
+	}
+}
+
+func TestKPHToMPS(t *testing.T) {
+	tts := []struct {
+		KPH float32
+		MPS float32
+	}{
+		{KPH: 0, MPS: 0},
+		{KPH: 1, MPS: 0.277},
+		{KPH: 7.2, MPS: 2},
+		{KPH: 50, MPS: 13.8889},
+	}
+	for _, tt := range tts {
+		if got := KPHToMPS(tt.KPH); !approxEqual(got, tt.MPS) {
+			t.Errorf("KPHToMPS(%f) = %f, want %f", tt.KPH, got, tt.MPS)
 		}
 	}
 }
@@ -85,16 +121,11 @@ func TestInHGToHPA(t *testing.T) {
 		{InHG: 0, HPA: 0},
 		{InHG: 1, HPA: 33.8639},
 		{InHG: 5, HPA: 169.3195},
-		{InHG: 29.92, HPA: 1013.25},
+		{InHG: 29.92, HPA: 1013.207},
 	}
 	for _, tt := range tts {
-		if c := InHgToHPA(tt.InHG); round(c, 4) != round(c, 4) {
-			t.Errorf("InHgToHPA(%f) = %f, want %f", tt.InHG, c, tt.HPA)
+		if got := InHgToHPA(tt.InHG); !approxEqual(got, tt.HPA) {
+			t.Errorf("InHgToHPA(%f) = %f, want %f", tt.InHG, got, tt.HPA)
 		}
 	}
-}
-
-func round(v float32, places int) float32 {
-	factor := math.Pow(10, float64(places))
-	return float32(math.Round(float64(v)*factor) / factor)
 }

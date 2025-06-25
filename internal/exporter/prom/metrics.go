@@ -20,16 +20,22 @@
 
 package prom
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/joshuasing/pws_exporter/internal/exporter"
+)
 
 const (
 	namespace        = "weather"
 	stationSubsystem = "station"
 )
 
-type metrics struct {
+// Metrics stores measurements from devices as Prometheus metrics.
+type Metrics struct {
 	BarometricPressure *prometheus.GaugeVec
 	DewPoint           *prometheus.GaugeVec
+	AbsoluteHumidity   *prometheus.GaugeVec
 	Humidity           *prometheus.GaugeVec
 	IndoorHumidity     *prometheus.GaugeVec
 	IndoorTemperature  *prometheus.GaugeVec
@@ -39,12 +45,18 @@ type metrics struct {
 	WindDirection      *prometheus.GaugeVec
 	WindGustSpeed      *prometheus.GaugeVec
 	WindSpeed          *prometheus.GaugeVec
+
+	FeelsLikeTemp   *prometheus.GaugeVec
+	AUSApparentTemp *prometheus.GaugeVec
+	HeatIndex       *prometheus.GaugeVec
+	WindChill       *prometheus.GaugeVec
 }
 
-func newMetrics(reg prometheus.Registerer) *metrics {
+// NewMetrics creates Prometheus metrics to store measurements in.
+func NewMetrics(reg prometheus.Registerer) *Metrics {
 	labels := []string{"station_id"}
 
-	m := &metrics{
+	m := &Metrics{
 		BarometricPressure: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: stationSubsystem,
@@ -55,13 +67,19 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Namespace: namespace,
 			Subsystem: stationSubsystem,
 			Name:      "dew_point_celsius",
-			Help:      "Dew point in celsius",
+			Help:      "Dew point in Celsius",
+		}, labels),
+		AbsoluteHumidity: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: stationSubsystem,
+			Name:      "humidity_abs_grams_per_cubic_meter",
+			Help:      "Absolute humidity in grams per cubic meter",
 		}, labels),
 		Humidity: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: stationSubsystem,
 			Name:      "humidity_percent",
-			Help:      "Humidity percentage (0-1)",
+			Help:      "Relative humidity percentage (0-1)",
 		}, labels),
 		IndoorHumidity: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
@@ -111,10 +129,35 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:      "wind_speed_kph",
 			Help:      "Wind speed in KM/h",
 		}, labels),
+		FeelsLikeTemp: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: stationSubsystem,
+			Name:      "feels_like_celsius",
+			Help:      "NOAA feels like temperature in Celsius",
+		}, labels),
+		AUSApparentTemp: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: stationSubsystem,
+			Name:      "aus_apparent_temp_celsius",
+			Help:      "Australia (BoM) apparent temperature in Celsius",
+		}, labels),
+		HeatIndex: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: stationSubsystem,
+			Name:      "heat_index_celsius",
+			Help:      "NOAA Heat Index in Celsius",
+		}, labels),
+		WindChill: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: stationSubsystem,
+			Name:      "wind_chill_celsius",
+			Help:      "NOAA Wind Chill in Celsius",
+		}, labels),
 	}
 	reg.MustRegister(
 		m.BarometricPressure,
 		m.DewPoint,
+		m.AbsoluteHumidity,
 		m.Humidity,
 		m.IndoorHumidity,
 		m.IndoorTemperature,
@@ -124,6 +167,36 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 		m.WindDirection,
 		m.WindGustSpeed,
 		m.WindSpeed,
+		m.FeelsLikeTemp,
+		m.AUSApparentTemp,
+		m.HeatIndex,
+		m.WindChill,
 	)
 	return m
+}
+
+// HandleDeviceMeasurement updates the Prometheus metrics with new values from
+// the device measurement.
+func (m *Metrics) HandleDeviceMeasurement(deviceID string, dm *exporter.DeviceMeasurement) error {
+	l := prometheus.Labels{"station_id": deviceID}
+
+	m.BarometricPressure.With(l).Set(float64(dm.BarometricPressure))
+	m.DewPoint.With(l).Set(float64(dm.DewPoint))
+	m.AbsoluteHumidity.With(l).Set(float64(dm.AbsoluteHumidity))
+	m.Humidity.With(l).Set(float64(dm.RelativeHumidity))
+	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity))
+	m.IndoorTemperature.With(l).Set(float64(dm.IndoorTemp))
+	m.RainPastHour.With(l).Set(float64(dm.RainPastHour))
+	m.Rain.Delete(l) // Counter state is stored on the station, not in the exporter.
+	m.Rain.With(l).Add(float64(dm.RainToday))
+	m.Temperature.With(l).Set(float64(dm.Temperature))
+	m.WindDirection.With(l).Set(float64(dm.WindDirection))
+	m.WindGustSpeed.With(l).Set(float64(dm.WindGustSpeed))
+	m.WindSpeed.With(l).Set(float64(dm.WindSpeed))
+	m.FeelsLikeTemp.With(l).Set(float64(dm.FeelsLikeTemp))
+	m.AUSApparentTemp.With(l).Set(float64(dm.AUSApparentTemp))
+	m.HeatIndex.With(l).Set(float64(dm.HeatIndex))
+	m.WindChill.With(l).Set(float64(dm.WindChill))
+
+	return nil
 }
