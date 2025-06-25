@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package collector
+package calc
 
 import "strconv"
 
@@ -34,7 +34,12 @@ func ParseFloat32(v string) (float32, bool) {
 
 // FToC converts Fahrenheit to Celsius.
 func FToC(f float32) float32 {
-	return (f - 32) / 1.8
+	return (f - 32) * 5 / 9
+}
+
+// CToF converts Celsius to Fahrenheit.
+func CToF(c float32) float32 {
+	return (c * 9 / 5) + 32
 }
 
 // InchesToMM converts inches to millimeters.
@@ -45,6 +50,16 @@ func InchesToMM(f float32) float32 {
 // MPHToKPH converts miles/hour to kilometers/hour.
 func MPHToKPH(f float32) float32 {
 	return f * 1.609344
+}
+
+// KPHToMPH converts kilometers/hour to miles/hour.
+func KPHToMPH(f float32) float32 {
+	return f * 0.621371
+}
+
+// KPHToMPS converts kilometers/hour to meters/second.
+func KPHToMPS(f float32) float32 {
+	return f / 3.6
 }
 
 // InHgToHPA converts pressure from inches of mercury (inHg) to hectopascals

@@ -97,20 +97,25 @@ pws_exporter supports multiple exporter types.
 The following Prometheus metrics are exposed by this exporter. More metrics will be added soon, however some metrics may
 not be supported by all APIs or weather stations.
 
-| Metric name                                  | Description                                             |
-|----------------------------------------------|---------------------------------------------------------|
-| `weather_station_barometric_pressure_hpa`    | Barometric pressure in hectopascals                     |
-| `weather_station_dew_point_celsius`          | Dew point in Celsius                                    |
-| `weather_station_humidity_percent`           | Humidity percentage                                     |
-| `weather_station_indoor_humidity`            | Indoor humidity percentage                              |
-| `weather_station_indoor_temperature_celsius` | Indoor temperature in Celsius                           |
-| `weather_station_rain_past_hour_mm`          | Amount of rain in the past hour in millimeters          |
-| `weather_station_rain_today_mm`              | Cumulative amount of rain since midnight in millimeters |
-| `weather_station_rain_today_mm`              | Cumulative amount of rain since midnight in millimeters |
-| `weather_station_temperature_celsius`        | Outdoor temperature in Celsius                          |
-| `weather_station_wind_direction_degrees`     | Wind direction in degrees                               |
-| `weather_station_wind_gust_speed_kph`        | Wind gust speed in KM/h                                 |
-| `weather_station_wind_speed_kph`             | Wind speed in KM/h                                      |
+| Metric name                                          | Type      | Description                                      |
+|------------------------------------------------------|-----------|--------------------------------------------------|
+| `weather_station_aus_apparent_temp_celsius`          | `gauge`   | Australia (BoM) apparent temperature in Celsius  |
+| `weather_station_barometric_pressure_hpa`            | `gauge`   | Barometric pressure in hectopascals              |
+| `weather_station_dew_point_celsius`                  | `gauge`   | Dew point in Celsius                             |
+| `weather_station_feels_like_celsius`                 | `gauge`   | NOAA feels like temperature in Celsius           |
+| `weather_station_heat_index_celsius`                 | `gauge`   | NOAA Heat Index in Celsius                       |
+| `weather_station_humidity_abs_grams_per_cubic_meter` | `gauge`   | Absolute humidity in grams per cubic meter       |
+| `weather_station_humidity_percent`                   | `gauge`   | Relative humidity percentage (0-1)               |
+| `weather_station_indoor_humidity_percent`            | `gauge`   | Indoor humidity percentage (0-1)                 |
+| `weather_station_indoor_temperature_celsius`         | `gauge`   | Indoor temperature in Celsius                    |
+| `weather_station_rain_mm`                            | `counter` | Rain in millimeters                              |
+| `weather_station_rain_past_hour_mm`                  | `gauge`   | Amount of rain over the past hour in millimeters |
+| `weather_station_temperature_celsius`                | `gauge`   | Temperature in Celsius                           |
+| `weather_station_wind_chill_celsius`                 | `gauge`   | NOAA Wind Chill in Celsius                       |
+| `weather_station_wind_direction_degrees`             | `gauge`   | Wind direction in degrees                        |
+| `weather_station_wind_gust_speed_kph`                | `gauge`   | Wind gust speed in KM/h                          |
+| `weather_station_wind_speed_kph`                     | `gauge`   | Wind speed in KM/h                               |
+
 
 #### Prometheus configuration
 

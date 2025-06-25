@@ -48,17 +48,19 @@ const (
 	stateClassMeasurementAngle = "measurement_angle"
 	stateClassTotalIncreasing  = "total_increasing"
 
-	unitCelsius     = "°C"
-	unitDegree      = "°"
-	unitHPA         = "hPa"
-	unitKPH         = "km/h"
-	unitMillimeters = "mm"
-	unitPercentage  = "%"
+	unitCelsius            = "°C"
+	unitDegree             = "°"
+	unitHPA                = "hPa"
+	unitKPH                = "km/h"
+	unitMillimeters        = "mm"
+	unitPercentage         = "%"
+	unitGramsPerCubicMeter = "g/m³"
 )
 
 type haComponent struct {
 	ID            string
 	Name          string
+	Icon          string
 	DeviceClass   string
 	StateClass    string
 	Unit          string
@@ -75,12 +77,20 @@ var components = []haComponent{
 		ValueTemplate: "{{ value_json.temperature }}",
 	},
 	{
-		ID:            "humidity",
-		Name:          "Humidity",
+		ID:            "humidity_abs",
+		Name:          "Absolute Humidity",
+		Icon:          "mdi:water-percent",
+		Unit:          unitGramsPerCubicMeter,
+		StateClass:    stateClassMeasurement,
+		ValueTemplate: "{{ value_json.humidity_abs }}",
+	},
+	{
+		ID:            "humidity_rel",
+		Name:          "Relative Humidity",
 		DeviceClass:   deviceClassHumidity,
 		Unit:          unitPercentage,
 		StateClass:    stateClassMeasurement,
-		ValueTemplate: "{{ value_json.humidity }}",
+		ValueTemplate: "{{ value_json.humidity_rel }}",
 	},
 	{
 		ID:            "barometric_pressure",
@@ -148,11 +158,42 @@ var components = []haComponent{
 	},
 	{
 		ID:            "indoor_humidity",
-		Name:          "Indoor Humidity",
+		Name:          "Indoor Relative Humidity",
 		DeviceClass:   deviceClassHumidity,
 		Unit:          unitPercentage,
 		StateClass:    stateClassMeasurement,
 		ValueTemplate: "{{ value_json.indoor_humidity }}",
+	},
+	{
+		ID:            "feels_like",
+		Name:          "Feels Like",
+		DeviceClass:   deviceClassTemperature,
+		Unit:          unitCelsius,
+		StateClass:    stateClassMeasurement,
+		ValueTemplate: "{{ value_json.feels_like_temp }}",
+	},
+	{
+		ID:            "aus_apparent_temp",
+		Name:          "Apparent Temperature (AUS)",
+		DeviceClass:   deviceClassTemperature,
+		StateClass:    stateClassMeasurement,
+		ValueTemplate: "{{ value_json.aus_apparent_temp }}",
+	},
+	{
+		ID:            "heat_index",
+		Name:          "Heat Index",
+		DeviceClass:   deviceClassTemperature,
+		Unit:          unitCelsius,
+		StateClass:    stateClassMeasurement,
+		ValueTemplate: "{{ value_json.heat_index }}",
+	},
+	{
+		ID:            "wind_chill",
+		Name:          "Wind Chill",
+		DeviceClass:   deviceClassTemperature,
+		Unit:          unitCelsius,
+		StateClass:    stateClassMeasurement,
+		ValueTemplate: "{{ value_json.wind_chill }}",
 	},
 }
 
@@ -269,10 +310,11 @@ func (e *Exporter) publishDiscovery(deviceID string) error {
 	for _, m := range components {
 		cmps[m.ID] = map[string]any{
 			"p":                   "sensor",
-			"device_class":        m.DeviceClass,
+			"device_class":        nilEmpty(m.DeviceClass),
 			"state_class":         m.StateClass,
-			"unit_of_measurement": m.Unit,
+			"unit_of_measurement": nilEmpty(m.Unit),
 			"name":                m.Name,
+			"icon":                nilEmpty(m.Icon),
 			"unique_id":           fmt.Sprintf("%s_%s", deviceID, m.ID),
 			"value_template":      m.ValueTemplate,
 		}
@@ -317,4 +359,11 @@ func (e *Exporter) publishState(deviceID string, dm *exporter.DeviceMeasurement)
 	slog.Debug("Published sensor state to MQTT",
 		slog.String("device_id", deviceID), slog.String("topic", topic))
 	return nil
+}
+
+func nilEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
