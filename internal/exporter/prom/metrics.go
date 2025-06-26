@@ -180,23 +180,23 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 func (m *Metrics) HandleDeviceMeasurement(deviceID string, dm *exporter.DeviceMeasurement) error {
 	l := prometheus.Labels{"station_id": deviceID}
 
-	m.BarometricPressure.With(l).Set(float64(dm.BarometricPressure))
-	m.DewPoint.With(l).Set(float64(dm.DewPoint))
-	m.AbsoluteHumidity.With(l).Set(float64(dm.AbsoluteHumidity))
-	m.Humidity.With(l).Set(float64(dm.RelativeHumidity / 100))
-	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity / 100))
-	m.IndoorTemperature.With(l).Set(float64(dm.IndoorTemp))
-	m.RainPastHour.With(l).Set(float64(dm.RainPastHour))
+	m.BarometricPressure.With(l).Set(dm.BarometricPressure)
+	m.DewPoint.With(l).Set(dm.DewPoint)
+	m.AbsoluteHumidity.With(l).Set(dm.AbsoluteHumidity)
+	m.Humidity.With(l).Set(dm.RelativeHumidity / 100)
+	m.IndoorHumidity.With(l).Set(dm.IndoorHumidity / 100)
+	m.IndoorTemperature.With(l).Set(dm.IndoorTemp)
+	m.RainPastHour.With(l).Set(dm.RainPastHour)
 	m.Rain.Delete(l) // Counter state is stored on the station, not in the exporter.
-	m.Rain.With(l).Add(float64(dm.RainToday))
-	m.Temperature.With(l).Set(float64(dm.Temperature))
-	m.WindDirection.With(l).Set(float64(dm.WindDirection))
-	m.WindGustSpeed.With(l).Set(float64(dm.WindGustSpeed))
-	m.WindSpeed.With(l).Set(float64(dm.WindSpeed))
-	m.FeelsLikeTemp.With(l).Set(float64(dm.FeelsLikeTemp))
-	m.AUSApparentTemp.With(l).Set(float64(dm.AUSApparentTemp))
-	m.HeatIndex.With(l).Set(float64(dm.HeatIndex))
-	m.WindChill.With(l).Set(float64(dm.WindChill))
+	m.Rain.With(l).Add(dm.RainToday)
+	m.Temperature.With(l).Set(dm.Temperature)
+	m.WindDirection.With(l).Set(dm.WindDirection)
+	m.WindGustSpeed.With(l).Set(dm.WindGustSpeed)
+	m.WindSpeed.With(l).Set(dm.WindSpeed)
+	m.FeelsLikeTemp.With(l).Set(dm.FeelsLikeTemp)
+	m.AUSApparentTemp.With(l).Set(dm.AUSApparentTemp)
+	m.HeatIndex.With(l).Set(dm.HeatIndex)
+	m.WindChill.With(l).Set(dm.WindChill)
 
 	return nil
 }

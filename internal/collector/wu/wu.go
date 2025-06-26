@@ -66,73 +66,73 @@ var wuMappings = map[string]wuParser{
 		return nil
 	},
 	"rtfreq": func(v string, dm *exporter.DeviceMeasurement) error {
-		if rtFreq, ok := calc.ParseFloat32(v); ok {
+		if rtFreq, ok := calc.ParseFloat64(v); ok {
 			dm.UpdateFreq = rtFreq
 		}
 		return nil
 	},
 	"winddir": func(v string, dm *exporter.DeviceMeasurement) error {
-		if windDir, ok := calc.ParseFloat32(v); ok {
+		if windDir, ok := calc.ParseFloat64(v); ok {
 			dm.WindDirection = windDir
 		}
 		return nil
 	},
 	"windspeedmph": func(v string, dm *exporter.DeviceMeasurement) error {
-		if windSpeedMPH, ok := calc.ParseFloat32(v); ok {
+		if windSpeedMPH, ok := calc.ParseFloat64(v); ok {
 			dm.WindSpeed = calc.MPHToKPH(windSpeedMPH)
 		}
 		return nil
 	},
 	"windgustmph": func(v string, dm *exporter.DeviceMeasurement) error {
-		if windGustSpeedMPH, ok := calc.ParseFloat32(v); ok {
+		if windGustSpeedMPH, ok := calc.ParseFloat64(v); ok {
 			dm.WindGustSpeed = calc.MPHToKPH(windGustSpeedMPH)
 		}
 		return nil
 	},
 	"humidity": func(v string, dm *exporter.DeviceMeasurement) error {
-		if humidity, ok := calc.ParseFloat32(v); ok {
+		if humidity, ok := calc.ParseFloat64(v); ok {
 			dm.RelativeHumidity = humidity
 		}
 		return nil
 	},
 	"dewptf": func(v string, dm *exporter.DeviceMeasurement) error {
-		if dewPointF, ok := calc.ParseFloat32(v); ok {
+		if dewPointF, ok := calc.ParseFloat64(v); ok {
 			dm.DewPoint = calc.FToC(dewPointF)
 		}
 		return nil
 	},
 	"tempf": func(v string, dm *exporter.DeviceMeasurement) error {
-		if tempF, ok := calc.ParseFloat32(v); ok {
+		if tempF, ok := calc.ParseFloat64(v); ok {
 			dm.Temperature = calc.FToC(tempF)
 		}
 		return nil
 	},
 	"rainin": func(v string, dm *exporter.DeviceMeasurement) error {
-		if rainPastHourIn, ok := calc.ParseFloat32(v); ok {
+		if rainPastHourIn, ok := calc.ParseFloat64(v); ok {
 			dm.RainPastHour = calc.InchesToMM(rainPastHourIn)
 		}
 		return nil
 	},
 	"dailyrainin": func(v string, dm *exporter.DeviceMeasurement) error {
-		if dailyRainIn, ok := calc.ParseFloat32(v); ok {
+		if dailyRainIn, ok := calc.ParseFloat64(v); ok {
 			dm.RainToday = calc.InchesToMM(dailyRainIn)
 		}
 		return nil
 	},
 	"baromin": func(v string, dm *exporter.DeviceMeasurement) error {
-		if barometricPressureIn, ok := calc.ParseFloat32(v); ok {
+		if barometricPressureIn, ok := calc.ParseFloat64(v); ok {
 			dm.BarometricPressure = calc.InHgToHPA(barometricPressureIn)
 		}
 		return nil
 	},
 	"indoortempf": func(v string, dm *exporter.DeviceMeasurement) error {
-		if indoorTempF, ok := calc.ParseFloat32(v); ok {
+		if indoorTempF, ok := calc.ParseFloat64(v); ok {
 			dm.IndoorTemp = calc.FToC(indoorTempF)
 		}
 		return nil
 	},
 	"indoorhumidity": func(v string, dm *exporter.DeviceMeasurement) error {
-		if indoorHumidity, ok := calc.ParseFloat32(v); ok {
+		if indoorHumidity, ok := calc.ParseFloat64(v); ok {
 			dm.IndoorHumidity = indoorHumidity
 		}
 		return nil

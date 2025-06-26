@@ -30,25 +30,25 @@ import (
 // DeviceMeasurement is a measurement taken from a PWS device.
 type DeviceMeasurement struct {
 	LastUpdated time.Time `json:"last_updated"` // Submission time.
-	UpdateFreq  float32   `json:"update_freq"`  // Submission frequency in seconds
+	UpdateFreq  float64   `json:"update_freq"`  // Submission frequency in seconds
 
-	BarometricPressure float32 `json:"barometric_pressure"` // Barometric pressure (hPA)
-	DewPoint           float32 `json:"dew_point"`           // Dew point (°C)
-	AbsoluteHumidity   float32 `json:"humidity_abs"`        // Outdoor absolute humidity (g/m³)
-	RelativeHumidity   float32 `json:"humidity_rel"`        // Outdoor relative humidity (%)
-	IndoorHumidity     float32 `json:"indoor_humidity"`     // Indoor relative humidity (%)
-	IndoorTemp         float32 `json:"indoor_temp"`         // Indoor temperature (°C)
-	RainPastHour       float32 `json:"rain_past_hour"`      // Rain over past hour (mm)
-	RainToday          float32 `json:"rain_today"`          // Rain over the past 24 hours (mm)
-	Temperature        float32 `json:"temperature"`         // Temperature (°C)
-	WindDirection      float32 `json:"wind_direction"`      // Wind direction (0-360°)
-	WindGustSpeed      float32 `json:"wind_gust_speed"`     // Wind gust speed (km/h, software-specific time period)
-	WindSpeed          float32 `json:"wind_speed"`          // Wind speed (km/h)
+	BarometricPressure float64 `json:"barometric_pressure"` // Barometric pressure (hPA)
+	DewPoint           float64 `json:"dew_point"`           // Dew point (°C)
+	AbsoluteHumidity   float64 `json:"humidity_abs"`        // Outdoor absolute humidity (g/m³)
+	RelativeHumidity   float64 `json:"humidity_rel"`        // Outdoor relative humidity (%)
+	IndoorHumidity     float64 `json:"indoor_humidity"`     // Indoor relative humidity (%)
+	IndoorTemp         float64 `json:"indoor_temp"`         // Indoor temperature (°C)
+	RainPastHour       float64 `json:"rain_past_hour"`      // Rain over past hour (mm)
+	RainToday          float64 `json:"rain_today"`          // Rain over the past 24 hours (mm)
+	Temperature        float64 `json:"temperature"`         // Temperature (°C)
+	WindDirection      float64 `json:"wind_direction"`      // Wind direction (0-360°)
+	WindGustSpeed      float64 `json:"wind_gust_speed"`     // Wind gust speed (km/h, software-specific time period)
+	WindSpeed          float64 `json:"wind_speed"`          // Wind speed (km/h)
 
-	FeelsLikeTemp   float32 `json:"feels_like_temp"`   // NOAA apparent ("feels like") temperature (°C)
-	AUSApparentTemp float32 `json:"aus_apparent_temp"` // Australia (BoM) apparent temperature (°C)
-	HeatIndex       float32 `json:"heat_index"`        // Heat Index (NOAA, °C)
-	WindChill       float32 `json:"wind_chill"`        // Wind Chill (NOAA, °C)
+	FeelsLikeTemp   float64 `json:"feels_like_temp"`   // NOAA apparent ("feels like") temperature (°C)
+	AUSApparentTemp float64 `json:"aus_apparent_temp"` // Australia (BoM) apparent temperature (°C)
+	HeatIndex       float64 `json:"heat_index"`        // Heat Index (NOAA, °C)
+	WindChill       float64 `json:"wind_chill"`        // Wind Chill (NOAA, °C)
 }
 
 // DeriveMetrics calculates and adds additional metrics to the device

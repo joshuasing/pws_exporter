@@ -22,48 +22,48 @@ package calc
 
 import "strconv"
 
-// ParseFloat32 parses a float from the given string.
+// ParseFloat64 parses a float from the given string.
 // If the string cannot be parsed as a float, 0, false will be returned.
-func ParseFloat32(v string) (float32, bool) {
-	f, err := strconv.ParseFloat(v, 32)
+func ParseFloat64(v string) (float64, bool) {
+	f, err := strconv.ParseFloat(v, 64)
 	if err != nil {
 		return 0, false
 	}
-	return float32(f), true
+	return f, true
 }
 
 // FToC converts Fahrenheit to Celsius.
-func FToC(f float32) float32 {
+func FToC(f float64) float64 {
 	return (f - 32) * 5 / 9
 }
 
 // CToF converts Celsius to Fahrenheit.
-func CToF(c float32) float32 {
+func CToF(c float64) float64 {
 	return (c * 9 / 5) + 32
 }
 
 // InchesToMM converts inches to millimeters.
-func InchesToMM(f float32) float32 {
+func InchesToMM(f float64) float64 {
 	return f * 25.4
 }
 
 // MPHToKPH converts miles/hour to kilometers/hour.
-func MPHToKPH(f float32) float32 {
+func MPHToKPH(f float64) float64 {
 	return f * 1.609344
 }
 
 // KPHToMPH converts kilometers/hour to miles/hour.
-func KPHToMPH(f float32) float32 {
+func KPHToMPH(f float64) float64 {
 	return f * 0.621371
 }
 
 // KPHToMPS converts kilometers/hour to meters/second.
-func KPHToMPS(f float32) float32 {
+func KPHToMPS(f float64) float64 {
 	return f / 3.6
 }
 
 // InHgToHPA converts pressure from inches of mercury (inHg) to hectopascals
 // (hPa). Formula: 1 inHg = 33.8639 hPa.
-func InHgToHPA(inHg float32) float32 {
+func InHgToHPA(inHg float64) float64 {
 	return inHg * 33.8639
 }
