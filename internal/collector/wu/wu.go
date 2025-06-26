@@ -91,7 +91,7 @@ var wuMappings = map[string]wuParser{
 	},
 	"humidity": func(v string, dm *exporter.DeviceMeasurement) error {
 		if humidity, ok := calc.ParseFloat32(v); ok {
-			dm.RelativeHumidity = humidity / 100
+			dm.RelativeHumidity = humidity
 		}
 		return nil
 	},
@@ -133,7 +133,7 @@ var wuMappings = map[string]wuParser{
 	},
 	"indoorhumidity": func(v string, dm *exporter.DeviceMeasurement) error {
 		if indoorHumidity, ok := calc.ParseFloat32(v); ok {
-			dm.IndoorHumidity = indoorHumidity / 100
+			dm.IndoorHumidity = indoorHumidity
 		}
 		return nil
 	},

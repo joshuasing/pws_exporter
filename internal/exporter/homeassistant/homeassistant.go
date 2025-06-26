@@ -361,8 +361,6 @@ func (e *Exporter) publishDiscovery(deviceID string) error {
 	slog.Debug("Published Home Assistant MQTT discovery message",
 		slog.String("device_id", deviceID), slog.String("topic", topic))
 
-	slog.Debug(string(j))
-
 	return nil
 }
 
