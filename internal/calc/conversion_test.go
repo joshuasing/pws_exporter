@@ -26,8 +26,8 @@ import (
 
 func TestFtoC(t *testing.T) {
 	tts := []struct {
-		F float32
-		C float32
+		F float64
+		C float64
 	}{
 		{F: -9.4, C: -23},     // Extremely cold
 		{F: 0.0, C: -17.7778}, // Below freezing
@@ -45,8 +45,8 @@ func TestFtoC(t *testing.T) {
 
 func TestCToF(t *testing.T) {
 	tts := []struct {
-		F float32
-		C float32
+		F float64
+		C float64
 	}{
 		{C: -23, F: -9.4},     // Extremely cold
 		{C: -17.7778, F: 0.0}, // Below freezing
@@ -64,8 +64,8 @@ func TestCToF(t *testing.T) {
 
 func TestInchesToMM(t *testing.T) {
 	tts := []struct {
-		In float32
-		Mm float32
+		In float64
+		Mm float64
 	}{
 		{In: 0, Mm: 0},
 		{In: 1, Mm: 25.4},
@@ -81,8 +81,8 @@ func TestInchesToMM(t *testing.T) {
 
 func TestMPHToKPH(t *testing.T) {
 	tts := []struct {
-		MPH float32
-		KPH float32
+		MPH float64
+		KPH float64
 	}{
 		{MPH: 0, KPH: 0},
 		{MPH: 1, KPH: 1.60934},
@@ -98,8 +98,8 @@ func TestMPHToKPH(t *testing.T) {
 
 func TestKPHToMPS(t *testing.T) {
 	tts := []struct {
-		KPH float32
-		MPS float32
+		KPH float64
+		MPS float64
 	}{
 		{KPH: 0, MPS: 0},
 		{KPH: 1, MPS: 0.277},
@@ -115,8 +115,8 @@ func TestKPHToMPS(t *testing.T) {
 
 func TestInHGToHPA(t *testing.T) {
 	tts := []struct {
-		InHG float32
-		HPA  float32
+		InHG float64
+		HPA  float64
 	}{
 		{InHG: 0, HPA: 0},
 		{InHG: 1, HPA: 33.8639},

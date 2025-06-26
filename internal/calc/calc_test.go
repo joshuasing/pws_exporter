@@ -29,9 +29,9 @@ import (
 func TestAbsoluteHumidity(t *testing.T) {
 	tests := []struct {
 		name        string
-		tempC       float32
-		relHumidity float32 // relative humidity as fraction (0.0–1.0)
-		want        float32
+		tempC       float64
+		relHumidity float64 // relative humidity as fraction (0.0–1.0)
+		want        float64
 		wantErr     bool
 	}{
 		{"Normal 25C 50RH", 25, 0.50, 11.518, false},
@@ -66,9 +66,9 @@ func TestAbsoluteHumidity(t *testing.T) {
 func TestDewPoint(t *testing.T) {
 	tests := []struct {
 		name        string
-		tempC       float32
-		relHumidity float32 // relative humidity as fraction (0.0–1.0)
-		want        float32
+		tempC       float64
+		relHumidity float64 // relative humidity as fraction (0.0–1.0)
+		want        float64
 	}{
 		// Normal conditions
 		{"Mild 20C 50%", 20, 0.50, 9.26},
@@ -102,10 +102,10 @@ func TestDewPoint(t *testing.T) {
 func TestFeelsLike(t *testing.T) {
 	tests := []struct {
 		name         string
-		tempC        float32
-		relHumidity  float32
-		windSpeedKPH float32
-		want         float32
+		tempC        float64
+		relHumidity  float64
+		windSpeedKPH float64
+		want         float64
 		wantErr      bool
 	}{
 		// Heat Index cases (temp ≥ 26.7°C)
@@ -148,11 +148,11 @@ func TestFeelsLike(t *testing.T) {
 func TestApparentTemperatureAU(t *testing.T) {
 	tests := []struct {
 		name           string
-		tempC          float32
-		relHumidity    float32
-		windSpeedMPS   float32
-		solarRadiation float32
-		want           float32
+		tempC          float64
+		relHumidity    float64
+		windSpeedMPS   float64
+		solarRadiation float64
+		want           float64
 		wantErr        bool
 	}{
 		// BoM reference cases (no solar)
@@ -197,9 +197,9 @@ func TestApparentTemperatureAU(t *testing.T) {
 
 func TestHeatIndex(t *testing.T) {
 	tests := []struct {
-		tempC       float32
-		relHumidity float32
-		want        float32
+		tempC       float64
+		relHumidity float64
+		want        float64
 		wantErr     bool
 	}{
 		{
@@ -246,9 +246,9 @@ func TestHeatIndex(t *testing.T) {
 
 func TestWindChill(t *testing.T) {
 	tests := []struct {
-		tempC        float32
-		windSpeedKPH float32
-		want         float32
+		tempC        float64
+		windSpeedKPH float64
+		want         float64
 		wantErr      bool
 	}{
 		{
@@ -293,6 +293,6 @@ func TestWindChill(t *testing.T) {
 	}
 }
 
-func approxEqual(a, b float32) bool {
-	return math.Abs(float64(a-b)) < 0.01
+func approxEqual(a, b float64) bool {
+	return math.Abs(a-b) < 0.01
 }

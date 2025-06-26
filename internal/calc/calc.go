@@ -29,7 +29,7 @@ import (
 
 // AbsoluteHumidity returns the absolute humidity in grams per cubic meter
 // (g/m³) for a given temperature in Celsius and relative humidity (0.0-1.0).
-func AbsoluteHumidity(tempC, relHumidity float32) (float32, error) {
+func AbsoluteHumidity(tempC, relHumidity float64) (float64, error) {
 	if tempC < -273.15 {
 		return 0, errors.New("temp cannot be below absolute zero")
 	}
@@ -38,7 +38,7 @@ func AbsoluteHumidity(tempC, relHumidity float32) (float32, error) {
 	}
 
 	// Saturation vapor pressure (hPa) with Magnus formula
-	es := 6.112 * exp((17.67*tempC)/(tempC+243.5))
+	es := 6.112 * math.Exp((17.67*tempC)/(tempC+243.5))
 
 	// Actual vapor pressure (hPa)
 	ea := relHumidity * es
@@ -53,12 +53,12 @@ func AbsoluteHumidity(tempC, relHumidity float32) (float32, error) {
 // References:
 //   - https://iridl.ldeo.columbia.edu/dochelp/QA/Basic/dewpoint.html
 //   - https://www.wpc.ncep.noaa.gov/html/dewrh.shtml
-func DewPoint(tempC, relHumidity float32) (float32, error) {
+func DewPoint(tempC, relHumidity float64) (float64, error) {
 	if relHumidity <= 0 || relHumidity > 1 {
 		return 0, errors.New("relative humidity must be between 0.0 and 1.0")
 	}
 
-	alpha := log(relHumidity) + (17.625*tempC)/(243.04+tempC)
+	alpha := math.Log(relHumidity) + (17.625*tempC)/(243.04+tempC)
 	dewPoint := (243.04 * alpha) / (17.625 - alpha)
 
 	return dewPoint, nil
@@ -78,7 +78,7 @@ func DewPoint(tempC, relHumidity float32) (float32, error) {
 // References:
 //   - https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml
 //   - https://www.weather.gov/media/epz/wxcalc/windChill.pdf
-func FeelsLike(tempC, relHumidity, windSpeedKPH float32) (float32, error) {
+func FeelsLike(tempC, relHumidity, windSpeedKPH float64) (float64, error) {
 	if relHumidity < 0 || relHumidity > 1 {
 		return 0, errors.New("relative humidity must be between 0.0 and 1.0")
 	}
@@ -106,7 +106,7 @@ func FeelsLike(tempC, relHumidity, windSpeedKPH float32) (float32, error) {
 // References:
 //   - https://www.bom.gov.au/info/thermal_stress/
 //   - https://web.archive.org/web/20240823111037/http://www.bom.gov.au/jshess/docs/1994/steadman.pdf
-func ApparentTemperatureAU(tempC, relHumidity, windSpeedKPH, solarRadiation float32) (float32, error) {
+func ApparentTemperatureAU(tempC, relHumidity, windSpeedKPH, solarRadiation float64) (float64, error) {
 	if relHumidity < 0 || relHumidity > 1 {
 		return 0, errors.New("relative humidity must be between 0.0 and 1.0")
 	}
@@ -121,10 +121,10 @@ func ApparentTemperatureAU(tempC, relHumidity, windSpeedKPH, solarRadiation floa
 
 	// Vapour pressure in hPa from RH and temperature (BoM formula)
 	// e = RH × 6.105 × exp(17.27 × T / (237.7 + T))
-	e := relHumidity * 6.105 * exp(17.27*tempC/(237.7+tempC))
+	e := relHumidity * 6.105 * math.Exp(17.27*tempC/(237.7+tempC))
 
 	// Apparent temperature base (without solar radiation)
-	var at float32
+	var at float64
 	switch {
 	case solarRadiation > 0:
 		// Formula including the effects of temperature, humidity, wind and
@@ -145,7 +145,7 @@ func ApparentTemperatureAU(tempC, relHumidity, windSpeedKPH, solarRadiation floa
 // References:
 //   - https://en.wikipedia.org/wiki/Heat_index
 //   - https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml
-func HeatIndex(tempC, relHumidity float32) (float32, error) {
+func HeatIndex(tempC, relHumidity float64) (float64, error) {
 	if relHumidity < 0 || relHumidity > 1 {
 		return 0, errors.New("relative humidity must be between 0 and 1")
 	}
@@ -183,7 +183,7 @@ func HeatIndex(tempC, relHumidity float32) (float32, error) {
 	// Adjustments
 	switch {
 	case rh < 13 && tempF >= 80 && tempF <= 112:
-		heatIndex -= ((13 - rh) / 4) * sqrt((17-abs(tempF-95))/17)
+		heatIndex -= ((13 - rh) / 4) * math.Sqrt((17-math.Abs(tempF-95))/17)
 	case rh > 85 && tempF >= 80 && tempF >= 87:
 		heatIndex += ((rh - 85) / 10) * ((87 - tempF) / 5)
 	}
@@ -199,7 +199,7 @@ func HeatIndex(tempC, relHumidity float32) (float32, error) {
 // References:
 //   - https://en.wikipedia.org/wiki/Wind_chill
 //   - https://www.weather.gov/media/epz/wxcalc/windChill.pdf
-func WindChill(tempC, windSpeedKPH float32) (float32, error) {
+func WindChill(tempC, windSpeedKPH float64) (float64, error) {
 	if windSpeedKPH < 0 {
 		return 0, errors.New("wind speed cannot be negative")
 	}
@@ -211,28 +211,8 @@ func WindChill(tempC, windSpeedKPH float32) (float32, error) {
 	windSpeedMPH := KPHToMPH(windSpeedKPH)
 
 	windChillF := 35.74 + (0.6215 * tempF) -
-		(35.75 * pow(windSpeedMPH, 0.16)) +
-		(0.4275 * tempF * pow(windSpeedMPH, 0.16))
+		(35.75 * math.Pow(windSpeedMPH, 0.16)) +
+		(0.4275 * tempF * math.Pow(windSpeedMPH, 0.16))
 
 	return FToC(windChillF), nil
-}
-
-func exp(v float32) float32 {
-	return float32(math.Exp(float64(v)))
-}
-
-func pow(x, y float32) float32 {
-	return float32(math.Pow(float64(x), float64(y)))
-}
-
-func sqrt(v float32) float32 {
-	return float32(math.Sqrt(float64(v)))
-}
-
-func abs(v float32) float32 {
-	return float32(math.Abs(float64(v)))
-}
-
-func log(v float32) float32 {
-	return float32(math.Log(float64(v)))
 }
