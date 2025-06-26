@@ -21,24 +21,33 @@
 package wu
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/joshuasing/pws_exporter/internal/exporter"
 )
 
 const testQuery = SubmissionPath + "?ID=test&PASSWORD=testtest&action=updateraww&realtime=1&rtfreq=5&dateutc=now&baromin=29.65&tempf=63.5&dewptf=51.2&humidity=64&windspeedmph=4.4&windgustmph=4.9&winddir=270&rainin=0.0&dailyrainin=0.0&indoortempf=73.5&indoorhumidity=44"
 
+type testResult struct {
+	deviceID    string
+	measurement *exporter.DeviceMeasurement
+}
+
 func TestSubmission(t *testing.T) {
-	var (
-		deviceID        string
-		lastMeasurement *exporter.DeviceMeasurement
-	)
-	collector := NewCollector(func(dID string, dm *exporter.DeviceMeasurement) {
-		deviceID = dID
-		lastMeasurement = dm
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	ch := make(chan testResult)
+	collector := NewCollector(func(deviceID string, dm *exporter.DeviceMeasurement) {
+		ch <- testResult{
+			deviceID:    deviceID,
+			measurement: dm,
+		}
 	})
 
 	mux := http.NewServeMux()
@@ -60,9 +69,6 @@ func TestSubmission(t *testing.T) {
 	if res.StatusCode != http.StatusBadRequest {
 		t.Errorf("empty request got %d, want %d", res.StatusCode, http.StatusBadRequest)
 	}
-	if lastMeasurement != nil {
-		t.Errorf("measurement should be empty after bad request")
-	}
 
 	// Test submission
 	res, err = client.Get(ts.URL + testQuery)
@@ -80,13 +86,23 @@ func TestSubmission(t *testing.T) {
 	if string(body) != "success\n" {
 		t.Errorf("response body got %q, want %q", string(body), "success\n")
 	}
-	if deviceID != "test" {
-		t.Errorf("deviceID got %s, want %s", deviceID, "test")
+
+	var result testResult
+	select {
+	case result = <-ch:
+	case <-ctx.Done():
+		t.Errorf("measurement never received: %v", ctx.Err())
+		return
 	}
-	if lastMeasurement == nil {
-		t.Errorf("measurement should contain one measurement")
+
+	if result.deviceID != "test" {
+		t.Errorf("deviceID got %s, want %s", result.deviceID, "test")
 	}
-	if lastMeasurement.Temperature != 17.5 {
-		t.Errorf("temperature got %f, want %f", lastMeasurement.Temperature, 17.5)
+	if result.measurement == nil {
+		t.Errorf("result should contain one measurement")
+		return
+	}
+	if temp := result.measurement.Temperature; temp != 17.5 {
+		t.Errorf("temperature got %f, want %f", temp, 17.5)
 	}
 }
