@@ -379,10 +379,3 @@ func (e *Exporter) publishState(deviceID string, dm *exporter.DeviceMeasurement)
 		slog.String("device_id", deviceID), slog.String("topic", topic))
 	return nil
 }
-
-func nilEmpty(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
