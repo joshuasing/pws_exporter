@@ -58,16 +58,18 @@ type DeviceMeasurement struct {
 // Additionally, if AbsoluteHumidity or DewPoint are 0, they will be calculated
 // from Temperature and RelativeHumidity.
 func DeriveMetrics(dm *DeviceMeasurement) {
+	relHumidity := dm.RelativeHumidity / 100 // 0-100 -> 0-1
+
 	if dm.AbsoluteHumidity == 0 {
-		dm.AbsoluteHumidity, _ = calc.AbsoluteHumidity(dm.Temperature, dm.RelativeHumidity)
+		dm.AbsoluteHumidity, _ = calc.AbsoluteHumidity(dm.Temperature, relHumidity)
 	}
 	if dm.DewPoint == 0 {
-		dm.DewPoint, _ = calc.DewPoint(dm.Temperature, dm.RelativeHumidity)
+		dm.DewPoint, _ = calc.DewPoint(dm.Temperature, relHumidity)
 	}
 
-	dm.FeelsLikeTemp, _ = calc.FeelsLike(dm.Temperature, dm.RelativeHumidity, dm.WindSpeed)
-	dm.AUSApparentTemp, _ = calc.ApparentTemperatureAU(dm.Temperature, dm.RelativeHumidity, dm.WindSpeed, 0)
-	dm.HeatIndex, _ = calc.HeatIndex(dm.Temperature, dm.RelativeHumidity)
+	dm.FeelsLikeTemp, _ = calc.FeelsLike(dm.Temperature, relHumidity, dm.WindSpeed)
+	dm.AUSApparentTemp, _ = calc.ApparentTemperatureAU(dm.Temperature, relHumidity, dm.WindSpeed, 0)
+	dm.HeatIndex, _ = calc.HeatIndex(dm.Temperature, relHumidity)
 	dm.WindChill, _ = calc.WindChill(dm.Temperature, dm.WindSpeed)
 }
 

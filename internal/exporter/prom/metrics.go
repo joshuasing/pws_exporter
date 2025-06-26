@@ -183,8 +183,8 @@ func (m *Metrics) HandleDeviceMeasurement(deviceID string, dm *exporter.DeviceMe
 	m.BarometricPressure.With(l).Set(float64(dm.BarometricPressure))
 	m.DewPoint.With(l).Set(float64(dm.DewPoint))
 	m.AbsoluteHumidity.With(l).Set(float64(dm.AbsoluteHumidity))
-	m.Humidity.With(l).Set(float64(dm.RelativeHumidity))
-	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity))
+	m.Humidity.With(l).Set(float64(dm.RelativeHumidity / 100))
+	m.IndoorHumidity.With(l).Set(float64(dm.IndoorHumidity / 100))
 	m.IndoorTemperature.With(l).Set(float64(dm.IndoorTemp))
 	m.RainPastHour.With(l).Set(float64(dm.RainPastHour))
 	m.Rain.Delete(l) // Counter state is stored on the station, not in the exporter.
