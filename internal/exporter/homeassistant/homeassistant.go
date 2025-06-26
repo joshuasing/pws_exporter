@@ -58,13 +58,14 @@ const (
 )
 
 type haComponent struct {
-	ID            string
-	Name          string
-	Icon          string
-	DeviceClass   string
-	StateClass    string
-	Unit          string
-	ValueTemplate string
+	ID                string
+	Name              string
+	Icon              string
+	DeviceClass       string
+	StateClass        string
+	Unit              string
+	ValueTemplate     string
+	DisabledByDefault bool
 }
 
 var components = []haComponent{
@@ -165,35 +166,40 @@ var components = []haComponent{
 		ValueTemplate: "{{ value_json.indoor_humidity }}",
 	},
 	{
-		ID:            "feels_like",
-		Name:          "Feels Like",
-		DeviceClass:   deviceClassTemperature,
-		Unit:          unitCelsius,
-		StateClass:    stateClassMeasurement,
-		ValueTemplate: "{{ value_json.feels_like_temp }}",
+		ID:                "feels_like",
+		Name:              "Feels Like",
+		DeviceClass:       deviceClassTemperature,
+		Unit:              unitCelsius,
+		StateClass:        stateClassMeasurement,
+		ValueTemplate:     "{{ value_json.feels_like_temp }}",
+		DisabledByDefault: true,
 	},
 	{
-		ID:            "aus_apparent_temp",
-		Name:          "Apparent Temperature (AUS)",
-		DeviceClass:   deviceClassTemperature,
-		StateClass:    stateClassMeasurement,
-		ValueTemplate: "{{ value_json.aus_apparent_temp }}",
+		ID:                "aus_apparent_temp",
+		Name:              "Apparent Temperature (AUS)",
+		DeviceClass:       deviceClassTemperature,
+		Unit:              unitCelsius,
+		StateClass:        stateClassMeasurement,
+		ValueTemplate:     "{{ value_json.aus_apparent_temp }}",
+		DisabledByDefault: true,
 	},
 	{
-		ID:            "heat_index",
-		Name:          "Heat Index",
-		DeviceClass:   deviceClassTemperature,
-		Unit:          unitCelsius,
-		StateClass:    stateClassMeasurement,
-		ValueTemplate: "{{ value_json.heat_index }}",
+		ID:                "heat_index",
+		Name:              "Heat Index",
+		DeviceClass:       deviceClassTemperature,
+		Unit:              unitCelsius,
+		StateClass:        stateClassMeasurement,
+		ValueTemplate:     "{{ value_json.heat_index }}",
+		DisabledByDefault: true,
 	},
 	{
-		ID:            "wind_chill",
-		Name:          "Wind Chill",
-		DeviceClass:   deviceClassTemperature,
-		Unit:          unitCelsius,
-		StateClass:    stateClassMeasurement,
-		ValueTemplate: "{{ value_json.wind_chill }}",
+		ID:                "wind_chill",
+		Name:              "Wind Chill",
+		DeviceClass:       deviceClassTemperature,
+		Unit:              unitCelsius,
+		StateClass:        stateClassMeasurement,
+		ValueTemplate:     "{{ value_json.wind_chill }}",
+		DisabledByDefault: true,
 	},
 }
 
@@ -304,19 +310,32 @@ func (e *Exporter) publishDiscoveryIfNew(deviceID string) error {
 	return nil
 }
 
+type discoveryComponent struct {
+	Platform         string `json:"p"`
+	Name             string `json:"name"`
+	Icon             string `json:"icon,omitempty"`
+	UniqueID         string `json:"unique_id"`
+	DeviceClass      string `json:"device_class,omitempty"`
+	StateClass       string `json:"state_class"`
+	Unit             string `json:"unit_of_measurement,omitempty"`
+	ValueTemplate    string `json:"value_template,omitempty"`
+	EnabledByDefault bool   `json:"enabled_by_default"`
+}
+
 // publishDiscovery publishes a discovery message to Home Assistant.
 func (e *Exporter) publishDiscovery(deviceID string) error {
-	cmps := make(map[string]any, len(components))
+	cmps := make(map[string]discoveryComponent, len(components))
 	for _, m := range components {
-		cmps[m.ID] = map[string]any{
-			"p":                   "sensor",
-			"device_class":        nilEmpty(m.DeviceClass),
-			"state_class":         m.StateClass,
-			"unit_of_measurement": nilEmpty(m.Unit),
-			"name":                m.Name,
-			"icon":                nilEmpty(m.Icon),
-			"unique_id":           fmt.Sprintf("%s_%s", deviceID, m.ID),
-			"value_template":      m.ValueTemplate,
+		cmps[m.ID] = discoveryComponent{
+			Platform:         "sensor",
+			Name:             m.Name,
+			Icon:             m.Icon,
+			UniqueID:         fmt.Sprintf("%s_%s", deviceID, m.ID),
+			DeviceClass:      m.DeviceClass,
+			StateClass:       m.StateClass,
+			Unit:             m.Unit,
+			ValueTemplate:    m.ValueTemplate,
+			EnabledByDefault: !m.DisabledByDefault,
 		}
 	}
 
@@ -359,11 +378,4 @@ func (e *Exporter) publishState(deviceID string, dm *exporter.DeviceMeasurement)
 	slog.Debug("Published sensor state to MQTT",
 		slog.String("device_id", deviceID), slog.String("topic", topic))
 	return nil
-}
-
-func nilEmpty(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
 }
