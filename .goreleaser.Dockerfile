@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 # Build stage
-FROM alpine:3.22.0@sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715 AS builder
+FROM alpine:3.23.2@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62 AS builder
 
 # Add ca-certificates, timezone data
 RUN apk --no-cache add --update ca-certificates tzdata
