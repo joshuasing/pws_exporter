@@ -1,0 +1,54 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:best-practices',
+    ':configMigration',
+    ':pinVersions',
+    ':rebaseStalePrs',
+    'schedule:weekly',
+    'docker:enableMajor',
+    'docker:pinDigests',
+    'preview:dockerCompose',
+    'preview:dockerVersions',
+    'customManagers:dockerfileVersions',
+    'customManagers:githubActionsVersions',
+    'helpers:pinGitHubActionDigests',
+  ],
+  commitMessagePrefix: 'all:',
+  commitMessageAction: 'update',
+  commitMessageTopic: '{{depName}}',
+  labels: [
+    'type: dependencies',
+  ],
+  minimumReleaseAge: '3 days',
+  packageRules: [
+    {
+      matchDatasources: ['go'],
+      commitMessageTopic: '{{depName}}'
+    },
+    {
+      matchDatasources: ['docker'],
+      commitMessageTopic: 'image {{depName}}',
+    },
+    {
+      matchManagers: ['gomod'],
+      commitMessagePrefix: 'go.mod:',
+      postUpdateOptions: ['gomodTidy']
+    },
+    {
+      matchManagers: ['github-actions'],
+      commitMessagePrefix: 'ci:',
+    },
+    {
+      matchUpdateTypes: ['pin', 'pinDigest'],
+      commitMessageAction: 'pin',
+    },
+  ],
+  osvVulnerabilityAlerts: true,
+  vulnerabilityAlerts: {
+    enabled: true,
+    addLabels: [
+      'type: security',
+    ],
+  },
+}
