@@ -265,10 +265,27 @@ func (e *Exporter) Run() error {
 	opts.SetAutoReconnect(true)
 	opts.SetClientID("pws_exporter")
 
+	opts.SetConnectionLostHandler(func(_ mqtt.Client, err error) {
+		slog.Warn("Lost connection to Home Assistant MQTT server",
+			slog.String("broker_url", e.mqttBrokerURL),
+			slog.Any("err", err))
+	})
+
+	opts.SetReconnectingHandler(func(_ mqtt.Client, _ *mqtt.ClientOptions) {
+		slog.Info("Reconnecting to Home Assistant MQTT server",
+			slog.String("broker_url", e.mqttBrokerURL))
+	})
+
 	opts.SetOnConnectHandler(func(_ mqtt.Client) {
 		slog.Info("Connected to Home Assistant MQTT server",
 			slog.String("broker_url", e.mqttBrokerURL),
 			slog.String("username", e.mqttUsername))
+
+		// Clear known devices so discovery messages are republished.
+		// This ensures Home Assistant receives discovery after reconnect.
+		e.knownDevicesMx.Lock()
+		clear(e.knownDevices)
+		e.knownDevicesMx.Unlock()
 	})
 
 	e.mqttClient = mqtt.NewClient(opts)
