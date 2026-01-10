@@ -33,7 +33,13 @@
     {
       matchManagers: ['gomod'],
       commitMessagePrefix: 'go.mod:',
-      postUpdateOptions: ['gomodTidy']
+      postUpdateOptions: ['gomodTidy'],
+    },
+    {
+      description: 'Avoid updating the minimum go version directive',
+      matchManagers: ['gomod'],
+      matchDepNames: ['go'],
+      enabled: false,
     },
     {
       matchManagers: ['github-actions'],
