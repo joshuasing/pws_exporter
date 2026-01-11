@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Joshua Sing <joshua@joshuasing.dev>
+# Copyright (c) 2024-2026 Joshua Sing <joshua@joshuasing.dev>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,34 +19,26 @@
 # SOFTWARE.
 
 # Build stage
-FROM golang:1.25.5-alpine3.22@sha256:3587db7cc96576822c606d119729370dbf581931c5f43ac6d3fa03ab4ed85a10 AS build
+FROM golang:1.25.5-alpine3.22@sha256:3587db7cc96576822c606d119729370dbf581931c5f43ac6d3fa03ab4ed85a10 AS builder
 
-# Add ca-certificates, timezone data
-RUN apk --no-cache add --update ca-certificates tzdata
+WORKDIR /build/
 
-# Create non-root user
-RUN addgroup --gid 65532 pws_exporter && \
-    adduser  --disabled-password --gecos "" \
-    --home "/etc/pws_exporter" --shell="/sbin/nologin" \
-    -G pws_exporter --uid 65532 pws_exporter
-
-WORKDIR /build/pws_exporter
-COPY . .
-
+COPY go.mod .
+COPY go.sum .
 RUN go mod download
 RUN go mod verify
 
+COPY . .
 RUN GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) CGO_ENABLED=0 GOGC=off \
-    go build -trimpath -ldflags "-s -w" -o /build/pws_exporter/dist/pws_exporter ./cmd/pws_exporter
+    go build -trimpath -ldflags "-s -w" -o ./bin/pws_exporter ./cmd/pws_exporter
 
-## Run stage
-FROM scratch
+# Run stage
+FROM cgr.dev/chainguard/static@sha256:7bdd9720cefba78e8133c4d03eaaf3f18a25d147d2c8803cc830061e46b6b474
 
 # Build metadata
 ARG VERSION
 ARG VCS_REF
 ARG BUILD_DATE
-
 LABEL maintainer="Joshua Sing <joshua@joshuasing.dev>"
 LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.authors="Joshua Sing <joshua@joshuasing.dev>" \
@@ -59,13 +51,9 @@ LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.title="Personal Weather Station Exporter" \
       org.opencontainers.image.description="A Prometheus Exporter for off-the-shelf Personal Weather Stations (PWS)"
 
-# Copy files
-COPY --from=build /etc/group /etc/group
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=build /etc/pws_exporter /etc/pws_exporter
-COPY --from=build /build/pws_exporter/dist/pws_exporter /usr/local/bin/pws_exporter
+# Copy binary
+COPY --from=builder /build/bin/pws_exporter /usr/local/bin/pws_exporter
 
-USER pws_exporter:pws_exporter
+EXPOSE 8080/tcp
+EXPOSE 9452/tcp
 ENTRYPOINT ["/usr/local/bin/pws_exporter"]

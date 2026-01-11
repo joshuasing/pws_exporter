@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Joshua Sing <joshua@joshuasing.dev>
+# Copyright (c) 2024-2026 Joshua Sing <joshua@joshuasing.dev>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Build stage
-FROM alpine:3.23.2@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62 AS builder
-
-# Add ca-certificates, timezone data
-RUN apk --no-cache add --update ca-certificates tzdata
-
-# Create non-root user
-RUN addgroup --gid 65532 pws_exporter && \
-    adduser  --disabled-password --gecos "" \
-    --home "/etc/pws_exporter" --shell="/sbin/nologin" \
-    -G pws_exporter --uid 65532 pws_exporter
-
-# Run stage
-FROM scratch
+FROM cgr.dev/chainguard/static@sha256:7bdd9720cefba78e8133c4d03eaaf3f18a25d147d2c8803cc830061e46b6b474
 
 # Build metadata
 ARG VERSION
 ARG VCS_REF
 ARG BUILD_DATE
-
 LABEL maintainer="Joshua Sing <joshua@joshuasing.dev>"
 LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.authors="Joshua Sing <joshua@joshuasing.dev>" \
@@ -50,12 +36,10 @@ LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.title="Personal Weather Station Exporter" \
       org.opencontainers.image.description="A Prometheus Exporter for off-the-shelf Personal Weather Stations (PWS)"
 
-# Copy files
-COPY --from=builder /etc/group /etc/group
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY pws_exporter /usr/local/bin/pws_exporter
+# Copy binary
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/pws_exporter /usr/local/bin/pws_exporter
 
-USER pws_exporter:pws_exporter
+EXPOSE 8080/tcp
+EXPOSE 9452/tcp
 ENTRYPOINT ["/usr/local/bin/pws_exporter"]
