@@ -6,7 +6,7 @@ toolchain go1.25.10
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
-	github.com/miekg/dns v1.1.70
+	github.com/miekg/dns v1.1.72
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
 	golang.org/x/sync v0.19.0
