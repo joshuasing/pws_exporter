@@ -33,7 +33,7 @@ RUN GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) CGO_ENABLED=0 GOGC=off \
     go build -trimpath -ldflags "-s -w" -o ./bin/pws_exporter ./cmd/pws_exporter
 
 # Run stage
-FROM cgr.dev/chainguard/static@sha256:3348c5f7b97a4d63944034a8c6c43ad8bc69771b2564bed32ea3173bc96b4e04
+FROM cgr.dev/chainguard/static@sha256:77d8b8925dc27970ec2f48243f44c7a260d52c49cd778288e4ee97566e0cb75b
 
 # Build metadata
 ARG VERSION
